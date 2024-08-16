@@ -25,6 +25,46 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+    //database and collections
+    const database = client.db('e-Buy');
+    const productCollection = database.collection('Products');
+
+
+    //Product Related Query
+    app.get('/Products',async(req,res)=>{
+        const result = await productCollection.find().toArray();
+        res.send(result);
+    })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -35,7 +75,7 @@ async function run() {
   });
 
   app.listen(port, () => {
-    console.log("e-Buy Running in the port:", port);
+    console.log("e-Buy Server Running in the port:", port);
   });
 }
 run().catch(console.dir);
