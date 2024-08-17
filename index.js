@@ -27,44 +27,76 @@ async function run() {
     await client.connect();
 
     //database and collections
-    const database = client.db('e-Buy');
-    const productCollection = database.collection('Products');
+    const database = client.db("e-Buy");
+    const productCollection = database.collection("Products");
 
+    // Product Related Query
+    app.get("/Products", async (req, res) => {
+      const { search, filter, sort, page, size } = req.query;
 
-    //Product Related Query
-    app.get('/Products',async(req,res)=>{
-        const result = await productCollection.find().toArray();
-        res.send(result);
-    })
+      let filterObj = {};
+      if (filter) {
+        filterObj = JSON.parse(filter);
+      }
 
+      let query = {};
 
+      if (search) {
+        query.ProductName = { $regex: search, $options: "i" };
+      }
 
+      //products filtering
+      if (filterObj.category) {
+        query.Category = filterObj.category;
+      }
+      if (filterObj.brand) {
+        query.BrandName = filterObj.brand;
+      }
+      if (filterObj.price) {
+        const [min, max] = filterObj.price.split(" to ").map(Number);
+        if (!isNaN(min) && !isNaN(max)) {
+          query.Price = { $gte: min, $lte: max };
+        } else {
+          console.error("Invalid price range:", filterObj.price);
+        }
+      }
 
+      // Sorting
+      let sortQuery = {};
+      if (sort === "Low to High") {
+        sortQuery.Price = 1;
+      } else if (sort === "High to Low") {
+        sortQuery.Price = -1;
+      } else if (sort === "Newest first") {
+        sortQuery.CreationDate = -1;
+      }
 
+      // Pagination
+      const skip = (parseInt(page) - 1) * parseInt(size);
+      const limit = parseInt(size);
 
+      try {
+        const cursor = productCollection
+          .find(query)
+          .sort(sortQuery)
+          .skip(skip)
+          .limit(limit);
+        const products = await cursor.toArray();
 
+        const totalDocuments = await productCollection.countDocuments(query);
 
+        res.send({ data: products, totalDocuments });
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).send("Server error");
+      }
+    });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    app.get("/Product/:Id", async (req, res) => {
+      const id = req.params.Id;
+      const result = await productCollection.findOne({ Id: id });
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
