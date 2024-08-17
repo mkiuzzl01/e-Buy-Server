@@ -6,7 +6,7 @@ require("dotenv").config();
 
 const port = process.env.VITE_PORT || 5000;
 
-//middleware
+// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -23,10 +23,10 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
+    // Connect the client to the server (optional starting in v4.7)
     await client.connect();
 
-    //database and collections
+    // Database and collections
     const database = client.db("e-Buy");
     const productCollection = database.collection("Products");
     const addCartCollection = database.collection("add-Cart");
@@ -42,15 +42,17 @@ async function run() {
 
       let query = {};
 
+      //searching
       if (search) {
         query.ProductName = { $regex: search, $options: "i" };
       }
 
-      //products filtering
+
+    //   filtering
       if (filterObj.category) {
         query.Category = filterObj.category;
-      }
-      if (filterObj.brand) {
+    }
+    if (filterObj.brand) {
         query.BrandName = filterObj.brand;
       }
       if (filterObj.price) {
@@ -58,7 +60,7 @@ async function run() {
         if (!isNaN(min) && !isNaN(max)) {
           query.Price = { $gte: min, $lte: max };
         } else {
-          console.error("Invalid price range:", filterObj.price);
+        //   console.error("Invalid price range:", filterObj.price);
         }
       }
 
@@ -89,18 +91,17 @@ async function run() {
         res.send({ data: products, totalDocuments });
       } catch (error) {
         console.error("Error fetching products:", error);
-        res.status(500).send("Server error");
       }
     });
 
-    //Product Details
+    // Product Details
     app.get("/Product/:Id", async (req, res) => {
       const id = req.params.Id;
       const result = await productCollection.findOne({ Id: id });
       res.send(result);
     });
 
-    //recent publish products
+    // Recent publish products
     app.get("/Recent-products", async (req, res) => {
       try {
         const recentProducts = await productCollection
@@ -116,36 +117,35 @@ async function run() {
       }
     });
 
-    //Trending Product
+    // Trending Product
     app.get("/Trending-products", async (req, res) => {
       try {
-        const recentProducts = await productCollection
+        const trendingProducts = await productCollection
           .find({})
           .sort({ Ratings: -1 })
           .limit(4)
           .toArray();
 
-        res.send(recentProducts);
+        res.send(trendingProducts);
       } catch (error) {
-        console.error("Error fetching recent products:", error);
+        console.error("Error fetching trending products:", error);
         res.status(500).send("Server error");
       }
     });
 
-    //add to cart api
+    // Add to cart API
     app.get('/Cart-product/:email',async(req,res)=>{
         const {email} = req.params;
         const result = await addCartCollection.find({userEmail:email}).toArray();
         res.send(result);
-    })
+    });
 
-    //=============Post related Api========================
+    // =============Post related API========================
     app.post("/add-cart", async (req, res) => {
       const info = req.body;
       const result = await addCartCollection.insertOne(info);
       res.send(result);
     });
-
 
   } finally {
     // Ensures that the client will close when you finish/error
