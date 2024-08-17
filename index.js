@@ -7,7 +7,11 @@ require("dotenv").config();
 const port = process.env.VITE_PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173",],
+  })
+);
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.VITE_DB_NAME}:${process.env.VITE_DB_PASS}@cluster0.rbychrh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -47,12 +51,11 @@ async function run() {
         query.ProductName = { $regex: search, $options: "i" };
       }
 
-
-    //   filtering
+      //   filtering
       if (filterObj.category) {
         query.Category = filterObj.category;
-    }
-    if (filterObj.brand) {
+      }
+      if (filterObj.brand) {
         query.BrandName = filterObj.brand;
       }
       if (filterObj.price) {
@@ -60,7 +63,7 @@ async function run() {
         if (!isNaN(min) && !isNaN(max)) {
           query.Price = { $gte: min, $lte: max };
         } else {
-        //   console.error("Invalid price range:", filterObj.price);
+          //   console.error("Invalid price range:", filterObj.price);
         }
       }
 
@@ -134,10 +137,12 @@ async function run() {
     });
 
     // Add to cart API
-    app.get('/Cart-product/:email',async(req,res)=>{
-        const {email} = req.params;
-        const result = await addCartCollection.find({userEmail:email}).toArray();
-        res.send(result);
+    app.get("/Cart-product/:email", async (req, res) => {
+      const { email } = req.params;
+      const result = await addCartCollection
+        .find({ userEmail: email })
+        .toArray();
+      res.send(result);
     });
 
     // =============Post related API========================
@@ -146,7 +151,6 @@ async function run() {
       const result = await addCartCollection.insertOne(info);
       res.send(result);
     });
-
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
