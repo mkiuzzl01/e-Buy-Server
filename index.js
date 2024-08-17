@@ -97,6 +97,40 @@ async function run() {
       const result = await productCollection.findOne({ Id: id });
       res.send(result);
     });
+
+    //recent publish products
+    app.get("/Recent-products", async (req, res) => {
+      try {
+        const recentProducts = await productCollection
+          .find({})
+          .sort({ CreationDate: -1 })
+          .limit(4)
+          .toArray();
+
+        res.send(recentProducts);
+      } catch (error) {
+        console.error("Error fetching recent products:", error);
+        res.status(500).send("Server error");
+      }
+    });
+
+    //Trending Product
+    app.get("/Trending-products", async (req, res) => {
+      try {
+        const recentProducts = await productCollection
+          .find({})
+          .sort({ Ratings:-1 })
+          .limit(4)
+          .toArray();
+
+        res.send(recentProducts);
+      } catch (error) {
+        console.error("Error fetching recent products:", error);
+        res.status(500).send("Server error");
+      }
+    });
+
+
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
