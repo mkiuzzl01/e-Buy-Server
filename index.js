@@ -29,8 +29,9 @@ async function run() {
     //database and collections
     const database = client.db("e-Buy");
     const productCollection = database.collection("Products");
+    const addCartCollection = database.collection("add-Cart");
 
-    // Product Related Query
+    // =================Product Related Query========================
     app.get("/Products", async (req, res) => {
       const { search, filter, sort, page, size } = req.query;
 
@@ -92,6 +93,7 @@ async function run() {
       }
     });
 
+    //Product Details
     app.get("/Product/:Id", async (req, res) => {
       const id = req.params.Id;
       const result = await productCollection.findOne({ Id: id });
@@ -119,7 +121,7 @@ async function run() {
       try {
         const recentProducts = await productCollection
           .find({})
-          .sort({ Ratings:-1 })
+          .sort({ Ratings: -1 })
           .limit(4)
           .toArray();
 
@@ -128,6 +130,20 @@ async function run() {
         console.error("Error fetching recent products:", error);
         res.status(500).send("Server error");
       }
+    });
+
+    //add to cart api
+    app.get('/Cart-product/:email',async(req,res)=>{
+        const {email} = req.params;
+        const result = await addCartCollection.find({userEmail:email}).toArray();
+        res.send(result);
+    })
+
+    //=============Post related Api========================
+    app.post("/add-cart", async (req, res) => {
+      const info = req.body;
+      const result = await addCartCollection.insertOne(info);
+      res.send(result);
     });
 
 
